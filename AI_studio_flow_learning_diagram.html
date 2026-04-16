@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Quiq AI Studio — Agent Flow Containers Demo v8</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:#f0f2f5;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+#toolbar{
+  display:flex;align-items:center;gap:10px;padding:0 16px;height:50px;
+  background:#ffffff;border-bottom:1px solid #e2e8f0;flex-shrink:0;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)
+}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:#1a202c}
+.logo-icon{width:28px;height:28px;background:linear-gradient(135deg,#3182ce,#805ad5);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:16px;height:16px;stroke:white;fill:none;stroke-width:2}
+.divider{width:1px;height:24px;background:#e2e8f0;margin:0 4px}
+.bot-tag{display:flex;align-items:center;gap:5px;background:#edf2ff;border:1px solid #c3dafe;border-radius:5px;padding:3px 9px;font-size:12px;color:#3730a3;font-weight:500}
+.spacer{flex:1}
+.tb-btn{
+  display:flex;align-items:center;gap:5px;
+  background:#f7fafc;border:1px solid #e2e8f0;border-radius:6px;
+  padding:5px 12px;font-size:12px;color:#4a5568;cursor:pointer;font-weight:500;
+  transition:all .15s;white-space:nowrap
+}
+.tb-btn:hover{background:#edf2ff;border-color:#c3dafe;color:#3730a3}
+.tb-btn.active{background:#fff5f5;border-color:#feb2b2;color:#c53030}
+.tb-btn.primary{background:#3182ce;border-color:#2b6cb0;color:#fff}
+.tb-btn.primary:hover{background:#2b6cb0}
+
+#cy{
+  flex:1;
+  background-color:#f8f9fb;
+  background-image:radial-gradient(circle,#c8d0df 1px,transparent 1px);
+  background-size:22px 22px;
+}
+#hint{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  background:rgba(255,255,255,.92);border:1px solid #e2e8f0;border-radius:8px;
+  padding:7px 16px;font-size:12px;color:#718096;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);pointer-events:none;
+  transition:opacity .4s;white-space:nowrap
+}
+#legend{
+  position:fixed;bottom:60px;right:18px;
+  background:rgba(255,255,255,.96);border:1px solid #e2e8f0;border-radius:8px;
+  padding:10px 14px;font-size:11px;color:#4a5568;
+  box-shadow:0 2px 8px rgba(0,0,0,.10);
+  cursor:move;user-select:none;min-width:170px;z-index:100;
+}
+#legend h4{font-size:11px;font-weight:700;color:#1a202c;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase}
+.leg-row{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.leg-row:last-child{margin-bottom:0}
+.leg-swatch{
+  width:36px;height:18px;border-radius:4px;border-width:1.5px;border-style:solid;
+  background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:10px;
+}
+.leg-label{color:#4a5568}
+
+#tooltip{
+  position:fixed;z-index:200;pointer-events:none;
+  max-width:380px;padding:12px 16px;
+  background:rgba(26,32,44,.95);color:#e2e8f0;
+  border:1px solid #4a5568;border-radius:8px;
+  font-size:12px;line-height:1.5;font-family:'Inter',system-ui,sans-serif;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);
+  opacity:0;transition:opacity .15s;
+  display:none;
+}
+#tooltip.show{opacity:1;display:block}
+#tooltip .tt-title{font-weight:700;font-size:13px;color:#90cdf4;margin-bottom:6px}
+#tooltip .tt-type{font-size:10px;color:#a0aec0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+#tooltip .tt-body{color:#cbd5e0}
+#tooltip .tt-section{margin-top:6px;font-weight:600;color:#90cdf4;font-size:11px}
+#tooltip .tt-list{margin:2px 0 0 12px;padding:0;color:#cbd5e0}
+#tooltip .tt-list li{margin-bottom:1px}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.5"></circle><path d="M8 1v2.5M8 12.5V15M1 8h2.5M12.5 8H15M3.05 3.05l1.77 1.77M11.18 11.18l1.77 1.77M3.05 12.95l1.77-1.77M11.18 4.82l1.77-1.77"></path></svg>
+    </div>
+    Quiq AI Studio Container Demo
+  </div>
+  <div class="divider"></div>
+  <div class="bot-tag">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#3730a3" stroke-width="2"><rect x="2" y="4" width="12" height="9" rx="2"></rect><path d="M5 4V3a3 3 0 016 0v1"></path><circle cx="6" cy="9" r="1" fill="#3730a3" stroke="none"></circle><circle cx="10" cy="9" r="1" fill="#3730a3" stroke="none"></circle></svg>
+    QUIQ Bot  ·  v8
+  </div>
+  <div class="spacer"></div>
+  <button class="tb-btn" id="errEdgeBtn" onclick="toggleErrorEdges()">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 8s3-5 7-5 7 5 7 5-3 5-7 5-7-5-7-5z"></path><circle cx="8" cy="8" r="2"></circle></svg>
+    <span id="errEdgeLabel">Hide Error Edges</span>
+  </button>
+  <button class="tb-btn" id="corePathBtn" onclick="toggleCorePath()">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8h12M9 4l4 4-4 4"></path></svg>
+    <span id="corePathLabel">Core Path</span>
+  </button>
+  <button class="tb-btn" onclick="collapseAll()">Collapse All</button>
+  <button class="tb-btn primary" onclick="expandAll()">Expand All</button>
+  <button class="tb-btn" onclick="resetLayout()">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8a5 5 0 1 1 1.5 3.5"></path><path d="M3 12V8h4"></path></svg>
+    Reset
+  </button>
+  <button class="tb-btn primary" onclick="saveToFile()">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 14h12M8 2v8M5 7l3 3 3-3"></path></svg>
+    Save Layout
+  </button>
+</div>
+
+<div id="cy"></div>
+<div id="hint">Click a container to collapse · Scroll to zoom · Drag to pan</div>
+
+<div id="legend">
+  <h4>Node Types</h4>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#38A169;background:#f0fff4">⬤</div><span class="leg-label">Entry / Assigned</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#E53E3E;background:#fff5f5">⬛</div><span class="leg-label">Turn Exit</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#805AD5">🧠</div><span class="leg-label">Prompt</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#3182CE">◆</div><span class="leg-label">Decision</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#718096">ƒ</div><span class="leg-label">Call Function</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#DD6B20">⏱</div><span class="leg-label">Timer</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#00B5D8">⌕</div><span class="leg-label">Search</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#00B5D8">⚡</div><span class="leg-label">Webhook</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#D69E2E">✓</div><span class="leg-label">Verify Claim</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#F56565">✕</div><span class="leg-label">Close</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#F56565">⟶</div><span class="leg-label">Queue</span></div>
+  <div class="leg-row"><div class="leg-swatch" style="border-color:#B7791F">☰</div><span class="leg-label">Dialog</span></div>
+</div>
+<div id="tooltip"></div>
+
+<script>
+// Snapshot original source before Cytoscape modifies the DOM
+const _originalHTML=document.documentElement.outerHTML;
+
+// ── Coordinate normalisation (v1) ─────────────────────────────────────────────
+const XM=-7324.67, YM=-1068.89, XR=6254.88, YR=2594.08;
+const nxv = x => (x - XM) / XR * 4400;
+const nyv = y => (y - YM) / YR * 2200;
+
+// ── Groups ────────────────────────────────────────────────────────────────────
+// Changes vs v4 (refactor):
+//  • Renamed: end-turn → deliver-and-close, deliver-message → eager-speak-guard
+//  • Renamed: content-not-found → content-search-gate
+//  • New nodes: reset-turn-state (g-start-turn), validate-links (g-tools),
+//               load-guide (g-reroute), analyze-turn (g-delivery)
+//  • switch-guide → load-guide → extract  (guide loading extracted)
+//  • escalation-scenario → load-guide direct  (skips selection)
+//  • retry → chain-guide  (loop guard now applied to retries)
+//  • route-tool → retry edge removed  (bad-links reset absorbed into route-tool)
+//  • content-search-gate → search-filler edge removed  (retry logic in route-tool)
+//  • end-turn → switch-guide removed  (post-turn guide switch via analyze-turn)
+//  • send-link-filler → switch-guide → send-link-filler → deliver-and-close
+//  • guide → validate-links → route-tool  (link validation made explicit)
+//  • end-turn → analyze-turn → delay-inferred-transfer / end-session / switch-guide
+const GROUPS=[
+  // Conversation management — teal family (session-level, not turn-level)
+  {id:'g-session',    label:'S.0 Start Conversation',          color:'#0D9488'},  // teal-600
+  {id:'g-async',      label:'W.0 Wait & Inactivity',            color:'#9CA3AF'},  // gray-400
+  {id:'g-wrapup',     label:'S.1 End Conversation',            color:'#0F766E'},  // teal-700
+  // Error Recovery — red, cross-cutting concern
+  {id:'g-error',      label:'E.0 Error Recovery',              color:'#DC2626'},  // red-600
+
+  // Turn pipeline — left to right
+  {id:'g-start-turn', label:'1.0 Start Turn',                    color:'#2563EB'},  // blue-600      — entry
+  {id:'g-planning',   label:'2.0 Decide Best Route',          color:'#4338CA'},  // indigo-700    — routing/planning
+  {id:'g-shortcuts',  label:'B.0 Bypass Guides',              color:'#6366F1'},  // indigo-500    — bypass routing
+  {id:'g-guides',     label:'3.0 Expert Guides',              color:'#7C3AED'},  // violet-600    — knowledge/expertise
+  {id:'g-reroute',    label:'R.0 Retry with Self-Correction',            color:'#8B5CF6'},  // violet-500    — corrective routing
+  {id:'g-tools',      label:'4.0 Tool Dispatch',              color:'#B45309'},  // amber-700     — tool hub
+  {id:'g-retrieval',  label:'5.1 Tool - Retrieve Context',    color:'#D97706'},  // amber-600     — tool: retrieval
+  {id:'g-auth',       label:'5.4 Tool - User Authentication', color:'#EA580C'},  // orange-600    — tool: auth
+  {id:'g-escalation', label:'5.3 Tool - Escalation',          color:'#C2410C'},  // orange-700    — tool: escalation
+  {id:'g-content',    label:'5.2 Tool - Content Response',    color:'#F97316'},  // orange-500    — tool: content
+  {id:'g-draft',      label:'5.0 Format Response',             color:'#0284C7'},  // sky-600       — generation
+  {id:'g-safety',     label:'6.0 Quality & Safety',           color:'#DB2777'},  // pink-600      — quality gate
+  {id:'g-analysis',   label:'A.0 Turn Analysis',              color:'#8B5CF6'},  // violet-500    — post-turn analysis
+  {id:'g-delivery',   label:'7.0 End Turn - Send Response',   color:'#16A34A'},  // green-600     — exit/output
+];
+
+// ── Nodes [id, displayLabel, type, groupId, rawX, rawY] ───────────────────────
+const N=[
+  // g-session
+  ['assigned',               'Assigned',               'assigned',    'g-session',    -7140.05, -725.64],
+  ['canary',                 'canary',                 'decision',    'g-session',    -6876.20, -815.12],
+  ['platform-switch',        'platform-switch',        'decision',    'g-session',    -6612.13, -724.61],
+  ['voice-assigned',         'voice-assigned',         'decision',    'g-session',    -6354.28, -817.28],
+  ['digital-assigned',       'digital-assigned',       'decision',    'g-session',    -6355.43, -722.16],
+  ['voice-intro',            'voice-intro',            'prompt',      'g-session',    -6095.15, -819.31],
+  ['digital-intro',          'digital-intro',          'prompt',      'g-session',    -6094.99, -721.34],
+
+  // g-start-turn
+  ['planner',                'planner',                'assigned',    'g-start-turn', -6101.21, -521.56],
+
+  // g-planning  (planner moved to g-start-turn; chain-guide removed — moved to g-reroute)
+  ['arbiter',                'arbiter',                'decision',    'g-planning',   -5978.35, -424.89],
+  ['escalation-scenario',    'escalation-scenario',    'decision',    'g-planning',   -4943.72, -425.95],
+  ['extract',                'extract',                'prompt',      'g-planning',   -5849.97, -318.18],
+  ['route-guide',            'route-guide',            'decision',    'g-planning',   -5708.20, -203.57],
+  ['send-link-filler',       'send-link-filler',       'prompt',      'g-shortcuts',  -6100.79, -317.43],
+  ['send-sms-link',          'send-sms-link',          'prompt',      'g-shortcuts',  -5973.99, -202.74],
+
+  // g-shortcuts  (arbiter direct-exit responses; positions manually set below)
+  ['security-bypass',        'security-bypass',        'decision',    'g-shortcuts',  -2898.00, 1030.00],
+  ['long-msg',               'long-msg',               'prompt',      'g-shortcuts',  -2897.45, 1197.01],
+  ['clarify',                'clarify',                'prompt',      'g-shortcuts',  -2898.12, 1277.58],
+  ['goodbye',                'goodbye',                'prompt',      'g-shortcuts',  -2898.97, 1113.74],
+
+  // g-guides
+  ['support-guide',          'support-guide',          'prompt',      'g-guides',     -5305.60,   14.93],
+  ['escalation-guide',       'escalation-guide',       'prompt',      'g-guides',     -5303.26,  209.07],
+  ['content-inquiry-guide',  'content-inquiry-guide',  'prompt',      'g-guides',     -5303.62,   79.97],
+  ['live-sports-guide',      'live-sports-guide',      'prompt',      'g-guides',     -5303.80,  144.14],
+  ['acct-mngt-guide',        'acct-mngt-guide',        'prompt',      'g-guides',     -5302.18,  271.81],
+  ['acct-verification-guide','acct-verification-guide','prompt',      'g-guides',     -5301.56,  335.41],
+  ['sms-consent-guide',      'sms-consent-guide',      'prompt',      'g-guides',     -5301.16,  399.87],
+
+  // g-reroute  (was g-correction; chain-guide added, position manually set)
+  ['retry',                  'retry',                  'call-fn',     'g-reroute',    -4944.04, -208.20],
+  ['switch-guide',           'switch-guide',           'call-fn',     'g-reroute',    -4942.82, -321.35],
+  ['load-guide',             'load-guide',             'call-fn',     'g-planning',   -4942.00, -390.00],
+  ['chain-guide',            'chain-guide',            'decision',    'g-planning',   -5714.55, 1436.42],
+
+  // g-tools
+  ['validate-links',         'validate-links',         'call-fn',     'g-tools',      -5100.00,  -63.00],
+  ['route-tool',             'route-tool',             'decision',    'g-tools',      -4940.01,  -63.21],
+  ['speak-eagerly',          'speak-eagerly',          'call-fn',     'g-tools',      -4941.32,  331.91],
+
+  // g-retrieval
+  ['search-filler',          'search-filler',          'prompt',      'g-retrieval',  -4225.92, 1270.48],
+  ['knowledge-search',       'knowledge-search',       'search',      'g-retrieval',  -4225.30, 1356.73],
+  ['relevant-info',          'relevant-info',          'prompt',      'g-retrieval',  -4224.63, 1439.50],
+  ['lookup-account-info',    'lookup-account-info',    'webhook',     'g-retrieval',  -4224.85, 1165.53],
+  ['provide-content-details','provide-content-details','prompt',      'g-content',    -4225.50,  907.16],
+  ['content-not-found',      'content-search-gate',    'decision',    'g-content',    -4222.37,  971.29],
+
+  // g-escalation
+  ['transfer_to_human_agent','transfer-human-agent',   'prompt',      'g-escalation', -4283.57,  301.00],
+
+  // g-auth
+  ['set-otp',                'set-otp',                'call-fn',     'g-auth',       -4285.57,  393.58],
+  ['notify-otp',             'notify-otp',             'prompt',      'g-auth',       -4284.41,  475.43],
+  ['sent-otp-msg',           'sent-otp-msg',           'prompt',      'g-auth',       -4049.58,  469.00],
+  ['verify-otp',             'verify-otp',             'call-fn',     'g-auth',       -4283.04,  559.09],
+  ['verified-otp-msg',       'verified-otp-msg',       'prompt',      'g-auth',       -4051.95,  555.60],
+  ['unverified-otp-msg',     'unverified-otp-msg',     'prompt',      'g-auth',       -4047.32,  638.02],
+
+  // g-draft
+  ['channel-rewrites',       'channel-rewrites',       'prompt',      'g-draft',      -4692.51,  -64.22],
+
+  // g-safety  (false-agency-msg and unverified-msg moved here; positions manually set)
+  ['safety-prompts',         'safety-prompts',         'prompt',      'g-safety',     -4443.76,  -62.67],
+  ['route-safety',           'route-safety',           'decision',    'g-safety',     -4068.04,  -61.09],
+  ['deny-attack',            'deny-attack',            'prompt',      'g-safety',     -4068.00, -430.96],
+  ['confirm-attack',         'confirm-attack',         'prompt',      'g-safety',     -4070.08,   62.03],
+  ['false-agency',           'false-agency',           'decision',    'g-safety',     -4067.73, -318.15],
+  ['confirm-false-agency',   'confirm-false-agency',   'prompt',      'g-safety',     -4295.25,   40.15],
+  ['false-agency-msg',       'false-agency-msg',       'prompt',      'g-safety',     -3083.64, -315.83],
+  ['verify-claim',           'verify-claim',           'verify-claim','g-safety',     -3688.14, -203.44],
+  ['confirm-unverified',     'confirm-unverified',     'prompt',      'g-safety',     -3842.16,   49.11],
+  ['unverified-msg',         'unverified-msg',         'prompt',      'g-safety',     -3083.19, -204.41],
+  ['prepare-msg',            'prepare-msg',            'prompt',      'g-delivery',   -3340.67,  -56.16],
+
+  // g-delivery  (false-agency-msg & unverified-msg removed; prepare-msg moved to g-safety)
+  ['end-turn',               'end-turn',               'turn-exit',   'g-delivery',   -2901.34, -780.46],
+  ['deliver-message',        'eager-speak-guard',      'call-fn',     'g-delivery',   -3090.15,  -51.83],
+  ['analyze-turn',           'analyze-turn',           'prompt',      'g-analysis',   -2700.00, -780.00],
+
+  // g-async
+  ['end-hook',               'end-hook',               'call-fn',     'g-async',      -2622.64, -779.41],
+  ['voice-timer',            'voice-timer',            'timer',       'g-async',      -2198.01, -725.83],
+  ['digital-timer',          'digital-timer',          'timer',       'g-async',      -2198.22, -845.51],
+  ['close-timer',            'close-timer',            'timer',       'g-async',      -1367.96, -489.15],
+  ['ask-was-helpful',        'ask-was-helpful',        'prompt',      'g-async',      -1370.50, -846.71],
+  ['repeat-last-message',    'repeat-last-message',    'call-fn',     'g-async',      -2193.60, -569.55],
+  ['difficulty-hearing',     'difficulty-hearing',     'prompt',      'g-async',      -1632.14, -487.75],
+
+  // g-wrapup  (goodbye removed)
+  ['delay-inferred-transfer','delay-transfer',         'timer',       'g-wrapup',     -2501.48,  -36.64],
+  ['end-session',            'end-session',            'turn-exit',   'g-wrapup',     -2223.96,  -34.81],
+  ['agent-queue',            'agent-queue',            'queue',       'g-wrapup',     -1240.61,  -36.56],
+  ['transfer-note',          'transfer-note',          'call-fn',     'g-wrapup',     -1493.55,  -36.62],
+  ['lift-profile',           'lift-profile',           'call-fn',     'g-wrapup',     -1981.86,  -34.19],
+  ['lift-fields',            'lift-fields',            'call-fn',     'g-wrapup',     -1740.19,  -35.75],
+  ['immediate-close',        'immediate-close',        'close',       'g-wrapup',     -1243.44,  146.09],
+
+  // g-error  (long-msg & clarify removed — now only core error-recovery nodes)
+  ['error-handler',          'error-handler',          'decision',    'g-error',      -3138.12, 1439.66],
+  ['soft-error',             'soft-error',             'prompt',      'g-error',      -2897.99, 1437.28],
+  ['hard-error',             'hard-error',             'dialog',      'g-error',      -2655.38, 1435.85],
+];
+
+// ── Edges ─────────────────────────────────────────────────────────────────────
+const E=[
+
+  ['assigned','canary'],['assigned','platform-switch'],
+  ['canary','platform-switch'],
+  ['platform-switch','voice-assigned'],['platform-switch','digital-assigned'],
+  ['voice-assigned','voice-intro'],['digital-assigned','digital-intro'],
+  ['voice-intro','error-handler'],['voice-intro','end-turn'],['voice-intro','planner'],
+  ['digital-intro','error-handler'],['digital-intro','end-turn'],['digital-intro','planner'],
+  ['planner','error-handler'],['planner','arbiter'],
+  ['arbiter','long-msg'],
+  ['arbiter','security-bypass'],['arbiter','extract'],['arbiter','escalation-scenario'],
+  ['arbiter','send-link-filler'],['arbiter','clarify'],['arbiter','goodbye'],
+  ['long-msg','error-handler'],['long-msg','end-turn'],
+  ['escalation-scenario','load-guide'],
+  ['end-turn','end-hook'],['end-turn','analyze-turn'],
+  ['analyze-turn','delay-inferred-transfer'],['analyze-turn','end-session'],
+  ['analyze-turn','switch-guide'],
+  ['end-hook','voice-timer'],['end-hook','digital-timer'],['end-hook','end-session'],
+  ['voice-timer','planner'],['voice-timer','difficulty-hearing'],['voice-timer','repeat-last-message'],
+  ['digital-timer','planner'],['digital-timer','ask-was-helpful'],['digital-timer','close-timer'],
+  ['close-timer','planner'],['close-timer','end-session'],
+  ['delay-inferred-transfer','planner'],['delay-inferred-transfer','end-session'],
+  ['repeat-last-message','voice-timer'],
+  ['difficulty-hearing','end-session'],
+  ['ask-was-helpful','error-handler'],['ask-was-helpful','close-timer'],
+  ['error-handler','chain-guide'],['error-handler','soft-error'],
+  ['soft-error','hard-error'],['soft-error','end-turn'],
+  ['hard-error','lift-fields'],
+  ['lift-fields','immediate-close'],['lift-fields','transfer-note'],
+  ['chain-guide','clarify'],['chain-guide','route-guide'],
+  ['extract','error-handler'],['extract','route-guide'],
+  ['retry','error-handler'],['retry','chain-guide'],['retry','route-tool'],
+  ['route-guide','escalation-guide'],['route-guide','content-inquiry-guide'],
+  ['route-guide','live-sports-guide'],['route-guide','acct-mngt-guide'],
+  ['route-guide','sms-consent-guide'],['route-guide','acct-verification-guide'],
+  ['route-guide','support-guide'],
+  ['escalation-guide','error-handler'],['escalation-guide','validate-links'],
+  ['content-inquiry-guide','error-handler'],['content-inquiry-guide','validate-links'],
+  ['live-sports-guide','error-handler'],['live-sports-guide','validate-links'],
+  ['acct-mngt-guide','error-handler'],['acct-mngt-guide','validate-links'],
+  ['sms-consent-guide','error-handler'],['sms-consent-guide','validate-links'],
+  ['acct-verification-guide','error-handler'],['acct-verification-guide','validate-links'],
+  ['support-guide','error-handler'],['support-guide','validate-links'],
+  ['validate-links','error-handler'],['validate-links','route-tool'],
+  ['route-tool','search-filler'],
+  ['route-tool','provide-content-details'],['route-tool','content-not-found'],
+  ['route-tool','transfer_to_human_agent'],['route-tool','set-otp'],
+  ['route-tool','verify-otp'],['route-tool','lookup-account-info'],
+  ['route-tool','switch-guide'],['route-tool','speak-eagerly'],
+  ['route-tool','channel-rewrites'],
+  ['search-filler','error-handler'],['search-filler','knowledge-search'],
+  ['knowledge-search','relevant-info'],
+  ['relevant-info','error-handler'],['relevant-info','chain-guide'],
+  ['provide-content-details','error-handler'],['provide-content-details','prepare-msg'],
+  ['content-not-found','prepare-msg'],
+  ['lookup-account-info','error-handler'],['lookup-account-info','knowledge-search'],
+  ['transfer_to_human_agent','error-handler'],['transfer_to_human_agent','prepare-msg'],
+  ['channel-rewrites','error-handler'],['channel-rewrites','safety-prompts'],
+  ['safety-prompts','error-handler'],['safety-prompts','route-safety'],
+  ['route-safety','deny-attack'],['route-safety','false-agency'],
+  ['route-safety','verify-claim'],['route-safety','prepare-msg'],
+  ['security-bypass','deny-attack'],
+  ['deny-attack','error-handler'],['deny-attack','end-turn'],['deny-attack','confirm-attack'],
+  ['confirm-attack','error-handler'],['confirm-attack','route-safety'],
+  ['false-agency','retry'],['false-agency','false-agency-msg'],
+  ['false-agency-msg','error-handler'],['false-agency-msg','end-turn'],
+  ['false-agency-msg','confirm-false-agency'],
+  ['confirm-false-agency','route-safety'],
+  ['verify-claim','retry'],['verify-claim','unverified-msg'],['verify-claim','prepare-msg'],
+  ['unverified-msg','error-handler'],['unverified-msg','end-turn'],
+  ['unverified-msg','confirm-unverified'],
+  ['confirm-unverified','route-safety'],
+  ['set-otp','error-handler'],['set-otp','notify-otp'],
+  ['notify-otp','error-handler'],['notify-otp','sent-otp-msg'],
+  ['sent-otp-msg','error-handler'],['sent-otp-msg','prepare-msg'],
+  ['verify-otp','error-handler'],['verify-otp','verified-otp-msg'],
+  ['verify-otp','unverified-otp-msg'],
+  ['verified-otp-msg','error-handler'],['verified-otp-msg','prepare-msg'],
+  ['unverified-otp-msg','error-handler'],['unverified-otp-msg','prepare-msg'],
+  ['send-link-filler','error-handler'],['send-link-filler','send-sms-link'],
+  ['send-link-filler','end-turn'],
+  ['send-sms-link','error-handler'],['send-sms-link','extract'],
+  ['speak-eagerly','error-handler'],['speak-eagerly','route-tool'],
+  ['switch-guide','error-handler'],['switch-guide','load-guide'],
+  ['load-guide','error-handler'],['load-guide','extract'],
+  ['clarify','error-handler'],['clarify','end-turn'],
+  ['goodbye','error-handler'],['goodbye','end-session'],
+  ['prepare-msg','error-handler'],['prepare-msg','deliver-message'],
+  ['deliver-message','error-handler'],['deliver-message','end-turn'],
+  ['end-session','lift-profile'],
+  ['lift-profile','lift-fields'],
+  ['transfer-note','agent-queue'],
+];
+
+// ── Compute positions ─────────────────────────────────────────────────────────
+const nodePositions = {};
+N.forEach(([id,,,, rawX, rawY]) => {
+  nodePositions[id] = { x: Math.round(nxv(rawX)), y: Math.round(nyv(rawY)) };
+});
+
+// Relocate nodes that moved to a different group so they sit near their new neighbours:
+
+// prepare-msg → g-safety: place right of unverified-msg (≈2700, 640)
+nodePositions['prepare-msg'] = { x: 2850, y: 700 };
+
+// chain-guide → g-planning: place below route-guide (≈1786, 629)
+nodePositions['chain-guide'] = { x: 1786, y: 870 };
+
+// false-agency-msg → g-safety: place right of false-agency (≈2142, 580)
+nodePositions['false-agency-msg'] = { x: 2320, y: 540 };
+
+// unverified-msg → g-safety: place right of verify-claim (≈2523, 672)
+nodePositions['unverified-msg']   = { x: 2700, y: 640 };
+
+// clarify, long-msg, goodbye → g-shortcuts: cluster near arbiter (≈1659, 545)
+// placed just below arbiter so the shortcut edges read as short downward jumps
+nodePositions['long-msg'] = { x: 1520, y: 760 };
+nodePositions['clarify']  = { x: 1680, y: 760 };
+nodePositions['goodbye']  = { x: 1840, y: 760 };
+
+// New v5 nodes
+nodePositions['validate-links']   = { x: 1830, y: 1052 };  // g-tools, left of route-tool
+nodePositions['load-guide']       = { x: 1698, y: 2000 };  // g-reroute, below switch-guide
+nodePositions['analyze-turn']     = { x: 3650, y: 540 };   // g-delivery, left of deliver-and-close
+
+// ── Type icons ────────────────────────────────────────────────────────────────
+const TYPE_ICON={
+  'assigned':'⬤ ','turn-exit':'⬛ ','prompt':'🧠 ','decision':'◆ ',
+  'timer':'⏱ ','call-fn':'ƒ ','search':'⌕ ','webhook':'⚡ ',
+  'verify-claim':'✓ ','close':'✕ ','queue':'⟶ ','dialog':'☰ ',
+};
+
+// ── Build elements ────────────────────────────────────────────────────────────
+const elements=[
+  ...GROUPS.map(g=>({
+    data:{ id:g.id, label:g.label, origLabel:g.label, color:g.color, isGroup:true }
+  })),
+  ...N.map(([id,label,type,group])=>({
+    data:{ id, label:(TYPE_ICON[type]||'')+label, rawLabel:label, type, parent:group },
+    position: nodePositions[id]||{x:200,y:200}
+  })),
+  ...E.map(([s,t],i)=>({
+    data:{ id:'e'+i, source:s, target:t, toError:t==='error-handler' }
+  }))
+];
+
+// ── Cytoscape ─────────────────────────────────────────────────────────────────
+const cy=cytoscape({
+  container: document.getElementById('cy'),
+  elements,
+  layout:{ name:'preset' },
+  style:[
+    // Child nodes
+    {
+      selector:'node:childless',
+      style:{
+        'label':'data(label)',
+        'font-size':10.5,'font-family':'Inter,system-ui,sans-serif','font-weight':500,
+        'text-valign':'center','text-halign':'center',
+        'shape':'round-rectangle',
+        'width':152,'height':40,
+        'color':'#2d3748',
+        'background-color':'#ffffff',
+        'border-width':1.5,'border-color':'#cbd5e0',
+        'text-wrap':'ellipsis','text-max-width':132,
+        'shadow-blur':4,'shadow-color':'#00000012','shadow-offset-x':0,'shadow-offset-y':2,
+      }
+    },
+    // Type accent colours
+    {selector:'node[type="assigned"]',    style:{'border-color':'#38A169','border-width':2.5,'background-color':'#f0fff4'}},
+    {selector:'node[type="turn-exit"]',   style:{'border-color':'#E53E3E','border-width':2.5,'background-color':'#fff5f5'}},
+    {selector:'node[type="prompt"]',      style:{'border-color':'#805AD5','border-width':1.5}},
+    {selector:'node[type="decision"]',    style:{'border-color':'#3182CE','border-width':1.5}},
+    {selector:'node[type="timer"]',       style:{'border-color':'#DD6B20','border-width':1.5}},
+    {selector:'node[type="call-fn"]',     style:{'border-color':'#718096','border-width':1.5}},
+    {selector:'node[type="search"]',      style:{'border-color':'#00B5D8','border-width':1.5}},
+    {selector:'node[type="webhook"]',     style:{'border-color':'#00B5D8','border-width':1.5}},
+    {selector:'node[type="verify-claim"]',style:{'border-color':'#D69E2E','border-width':1.5}},
+    {selector:'node[type="close"]',       style:{'border-color':'#F56565','border-width':1.5}},
+    {selector:'node[type="queue"]',       style:{'border-color':'#F56565','border-width':1.5}},
+    {selector:'node[type="dialog"]',      style:{'border-color':'#B7791F','border-width':1.5}},
+
+    // Container nodes (default)
+    {
+      selector:':parent',
+      style:{
+        'label':'data(label)',
+        'font-size':11,'font-family':'Inter,system-ui,sans-serif','font-weight':700,
+        'text-valign':'top','text-halign':'center','text-margin-y':8,
+        'color':'data(color)',
+        'background-color':'data(color)','background-opacity':0.07,
+        'border-color':'data(color)','border-width':1.5,'border-opacity':0.5,
+        'padding':'40px','shape':'round-rectangle','corner-radius':8,
+        'text-wrap':'ellipsis',
+        'text-max-width': function(ele){ return Math.max(ele.width()-24, 120)+'px'; },
+      }
+    },
+    {selector:':parent:active', style:{'border-opacity':1,'border-width':2}},
+
+    // Error Recovery — prominent dashed box to signal cross-cutting concern
+    {
+      selector:'#g-error',
+      style:{
+        'background-color':'#FFF5F5','background-opacity':0.85,
+        'border-color':'#E53E3E','border-width':2,'border-style':'dashed','border-opacity':0.85,
+        'color':'#C53030',
+      }
+    },
+
+    // Arbiter Shortcuts — subtle purple tint, dashed border
+    {
+      selector:'#g-shortcuts',
+      style:{
+        'background-color':'#FAF5FF','background-opacity':0.85,
+        'border-color':'#805AD5','border-width':1.5,'border-style':'dashed','border-opacity':0.7,
+      }
+    },
+
+    // Decide Best Route — cyan
+    {
+      selector:'#g-planning',
+      style:{
+        'background-color':'#06B6D4','background-opacity':0.15,
+        'border-color':'#0891B2','border-width':2,'border-opacity':1,
+        'color':'#164E63',
+      }
+    },
+    // Bypass Guides — bright pink
+    {
+      selector:'#g-shortcuts',
+      style:{
+        'background-color':'#EC4899','background-opacity':0.15,
+        'border-color':'#DB2777','border-width':2,'border-opacity':1,
+        'color':'#831843',
+      }
+    },
+
+    // Tools — bright orange
+    {
+      selector:'#g-retrieval, #g-auth, #g-escalation, #g-content',
+      style:{
+        'background-color':'#F97316','background-opacity':0.15,
+        'border-color':'#EA580C','border-width':2,'border-opacity':1,
+        'color':'#7C2D12',
+      }
+    },
+    // Tool Dispatch — grey (router, not a tool itself)
+    {
+      selector:'#g-tools',
+      style:{
+        'background-color':'#9CA3AF','background-opacity':0.15,
+        'border-color':'#6B7280','border-width':2,'border-opacity':1,
+        'color':'#374151',
+      }
+    },
+    // Self-Correction — grey
+    {
+      selector:'#g-reroute',
+      style:{
+        'background-color':'#9CA3AF','background-opacity':0.15,
+        'border-color':'#6B7280','border-width':2,'border-opacity':1,
+        'color':'#374151',
+      }
+    },
+    // Draft Response — gold
+    {
+      selector:'#g-draft',
+      style:{
+        'background-color':'#EAB308','background-opacity':0.15,
+        'border-color':'#CA8A04','border-width':2,'border-opacity':1,
+        'color':'#713F12',
+      }
+    },
+    // Quality & Safety — blue
+    {
+      selector:'#g-safety',
+      style:{
+        'background-color':'#3B82F6','background-opacity':0.15,
+        'border-color':'#2563EB','border-width':2,'border-opacity':1,
+        'color':'#1E3A8A',
+      }
+    },
+
+    // Entry/exit groups — bright green fill
+    {
+      selector:'#g-start-turn, #g-delivery',
+      style:{
+        'background-color':'#22C55E','background-opacity':0.18,
+        'border-color':'#16A34A','border-width':2.5,'border-opacity':1,
+        'color':'#14532D',
+      }
+    },
+    // Conversation entry/exit — bright green fill, black outline
+    {
+      selector:'#g-session, #g-wrapup',
+      style:{
+        'background-color':'#22C55E','background-opacity':0.18,
+        'border-color':'#000000','border-width':2.5,'border-opacity':1,
+        'color':'#14532D',
+      }
+    },
+
+    // Edges
+    {
+      selector:'edge',
+      style:{
+        'width':1.5,'line-color':'#a0aec0',
+        'target-arrow-color':'#a0aec0',
+        'target-arrow-shape':'triangle',
+        'curve-style':'bezier',
+        'opacity':0.7,'arrow-scale':0.75,
+      }
+    },
+    {
+      selector:'edge[?toError]',
+      style:{
+        'width':1,'line-color':'#feb2b2','line-style':'dashed',
+        'line-dash-pattern':[4,3],
+        'target-arrow-color':'#feb2b2','opacity':0.5,
+      }
+    },
+    {
+      selector:'edge[?virtual]',
+      style:{
+        'width':2,'line-color':'#90cdf4','line-style':'dashed','line-dash-pattern':[6,3],
+        'target-arrow-color':'#63b3ed','opacity':0.85,
+      }
+    },
+    {
+      selector:'edge[?coreEdge]',
+      style:{
+        'width':4.5,'line-color':'#1a202c','line-style':'solid',
+        'target-arrow-color':'#1a202c','opacity':1,'arrow-scale':1,
+      }
+    },
+    // Lane divider line
+    {
+      selector:'node[?isDivider]',
+      style:{
+        'background-color':'#a0aec0','background-opacity':0.35,
+        'border-width':0,'label':'',
+        'shape':'rectangle','z-index':'-1','events':'no',
+      }
+    },
+    // Lane labels
+    {
+      selector:'node[?isLaneLabel]',
+      style:{
+        'label':'data(label)',
+        'font-size':10,'font-family':'Inter,system-ui,sans-serif','font-weight':700,
+        'text-valign':'center','text-halign':'center',
+        'color':'#a0aec0','text-opacity':1,
+        'background-opacity':0,'border-width':0,
+        'shape':'rectangle','width':1,'height':1,
+        'events':'no','z-index':'1',
+      }
+    },
+    {selector:'node:selected',    style:{'border-width':2.5,'border-color':'#3182ce','border-opacity':1}},
+    {selector:':parent:selected', style:{'border-opacity':1,'border-width':2.5}},
+  ],
+  userZoomingEnabled:true,userPanningEnabled:true,
+  minZoom:0.04,maxZoom:4,wheelSensitivity:0.25,
+});
+
+// ── Add swim-lane divider line ────────────────────────────────────────────────
+// Placed between the session-start nodes (Y ≈ 50–295) and turn pipeline (Y ≈ 464+)
+// The divider sits in the natural gap at Y ≈ 390.
+const allX = Object.values(nodePositions).map(p=>p.x);
+const xMin = Math.min(...allX) - 200;
+const xMax = Math.max(...allX) + 200;
+const laneW = xMax - xMin;
+const laneCX = xMin + laneW/2;
+const DIVIDER_Y = 380;
+
+cy.add({ data:{id:'lane-div', isDivider:true}, position:{x:laneCX, y:DIVIDER_Y} });
+cy.$('#lane-div').style({ width: laneW + 100, height: 3 });
+
+// Floating lane labels — sit just inside each band on the left margin
+cy.add({ data:{id:'lbl-session', isLaneLabel:true, label:'SESSION MANAGEMENT'}, position:{x: xMin+160, y: DIVIDER_Y - 90} });
+cy.add({ data:{id:'lbl-turn',    isLaneLabel:true, label:'CONVERSATION TURN'},  position:{x: xMin+160, y: DIVIDER_Y + 90} });
+
+cy.$('#lane-div,#lbl-session,#lbl-turn').style('z-index','-1');
+
+// ── Descriptions for hover tooltips ───────────────────────────────────────────
+const GROUP_DESC={
+  'g-session':{
+    title:'S.0 Start Conversation',
+    desc:'One-time session initialization. Captures customer profile, detects channel (voice/digital), configures STT/TTS models, delivers intro message.',
+    inputs:'New conversation assigned by platform',
+    outputs:'end-turn (voice/digital intro sent), planner (digital with message content)'
+  },
+  'g-start-turn':{
+    title:'1.0 Start Turn',
+    desc:'Turn entry point. Runs up to 15 parallel LLM classification prompts on every incoming message: intent, sensitivity, attack detection, search phrases, and speculatively pre-runs the guide on voice for optimistic delivery.',
+    inputs:'Customer message via timers or intro',
+    outputs:'arbiter (classification results)'
+  },
+  'g-planning':{
+    title:'2.0 Decide Best Route',
+    desc:'Decision hub. Takes planner classification output and resolves it into a guide + extraction path. Contains the loop guard (chain-guide, max 2 chains) and guide loading.',
+    inputs:'arbiter decisions, chain-guide re-entry from retrieval/error',
+    outputs:'Guide nodes, bypass shortcuts, escalation'
+  },
+  'g-shortcuts':{
+    title:'B.0 Bypass Guides',
+    desc:'All early-exit paths that skip guide execution entirely. Every node produces a scripted/canned response — no LLM guide runs. Includes security intercept waypoint, voice link sharing, and loop-cap clarification.',
+    inputs:'arbiter (attack, long msg, goodbye, voice link, loop cap)',
+    outputs:'end-turn, end-session, extract (re-entry after link send)'
+  },
+  'g-guides':{
+    title:'3.0 Expert Guides',
+    desc:'Domain knowledge layer. Each guide is a specialized LLM prompt using run-guide that produces a response + tool selection. 7 guides share the same shell pattern. The AI non-deterministically selects which tool to call next.',
+    inputs:'route-guide dispatch based on botSession.guide',
+    outputs:'validate-links → route-tool (tool selection from AI output)'
+  },
+  'g-reroute':{
+    title:'R.0 Retry with Self-Correction',
+    desc:'Backward-arrow group. Both nodes re-enter the pipeline at an earlier stage after a failure or context change. retry handles verification/link failures; switch-guide handles guide changes and implements a one-deep call/return stack for nested guides.',
+    inputs:'false-agency, verify-claim (safety failures); route-tool (guide switch, bad links); analyze-turn (post-turn switch)',
+    outputs:'chain-guide (retry with loop guard), load-guide → extract (guide switch)'
+  },
+  'g-tools':{
+    title:'4.0 Tool Dispatch',
+    desc:'Central switchboard between guide output and tool execution. Every guide funnels through here. route-tool reads the AI tool selection and dispatches to the correct branch (11 outbound paths). On voice, speak-eagerly fires first for immediate TTS delivery.',
+    inputs:'validate-links (from all guides), speak-eagerly loop-back',
+    outputs:'All 5.x tool groups, channel-rewrites, retry, switch-guide, speak-eagerly'
+  },
+  'g-draft':{
+    title:'5.0 Format Response',
+    desc:'Default/happy path — the AI has a response ready and no external tool is needed. Applies channel-specific formatting: voice link offers (SMS) and rich link formatting (digital) before safety review.',
+    inputs:'route-tool (default fall-through when no tool needed)',
+    outputs:'safety-prompts'
+  },
+  'g-retrieval':{
+    title:'5.1 Tool - Retrieve Context',
+    desc:'Retrieval pipeline. Searches multiple indexes (articles, movies, shows) in parallel, scores relevance, and re-enters the guide pipeline with enriched context. Account lookup adds CRM data before searching.',
+    inputs:'route-tool (search_for_information, content_search, lookup_account_info)',
+    outputs:'chain-guide (re-enters guide pipeline with search results)'
+  },
+  'g-content':{
+    title:'5.2 Tool - Content Response',
+    desc:'Two mutually exclusive outcomes of the content-inquiry-guide AI decision. provide-content-details sends a canned response; content-search-gate decides whether to retry search or give up.',
+    inputs:'route-tool (provide_content_details, content_not_found)',
+    outputs:'prepare-msg'
+  },
+  'g-escalation':{
+    title:'5.3 Tool - Escalation',
+    desc:'Human agent transfer path. Sends a holding message ("Please hold while I connect you"). The actual transfer is orchestrated downstream by analyze-turn detecting transfer intent, then session wrapup handles the handoff.',
+    inputs:'route-tool (transfer_to_human_agent)',
+    outputs:'prepare-msg → deliver → end-turn → delay-inferred-transfer → agent-queue'
+  },
+  'g-auth':{
+    title:'5.4 Tool - User Authentication',
+    desc:'Two-phase OTP flow split across turns. Phase 1: generate code, SMS it, ask customer to share. Phase 2 (next turn): verify code, confirm or ask to retry. On success, triggers guide switch back to the requesting guide. Warning: no retry cap on wrong codes.',
+    inputs:'route-tool (send_one_time_passcode, verify_one_time_passcode)',
+    outputs:'prepare-msg (both phases). verified-otp-msg sets tool=switch_guide for guide return.'
+  },
+  'g-safety':{
+    title:'6.0 Quality & Safety',
+    desc:'Multi-layered quality gate with three parallel detection paths: prompt injection attacks, false agency (AI claiming actions it didn\'t take), and unverified factual claims. Each detection uses a confirm-then-act pattern — a second LLM opinion before taking action. Intentional redundancy for non-deterministic AI.',
+    inputs:'safety-prompts (from channel-rewrites)',
+    outputs:'prepare-msg (clean), end-turn (attack/false-agency/unverified responses), retry (correction attempts)'
+  },
+  'g-analysis':{
+    title:'A.0 Turn Analysis',
+    desc:'Post-turn LLM analysis. Inspects the completed turn to detect: did the agent transfer to human? did it offer a link? did it ask "anything else?" Results drive post-turn routing decisions.',
+    inputs:'end-turn (after message delivered)',
+    outputs:'delay-inferred-transfer, end-session, switch-guide'
+  },
+  'g-delivery':{
+    title:'7.0 End Turn - Send Response',
+    desc:'Turn exit pipeline. prepare-msg applies final formatting. eager-speak-guard is a deduplication gate — skips delivery if speak-eagerly already sent the message on voice. end-turn runs post-turn analysis and hands off to async timers.',
+    inputs:'prepare-msg (from safety clean exit and tool branches)',
+    outputs:'end-hook (async timers), analyze-turn, end-session'
+  },
+  'g-async':{
+    title:'W.0 Wait & Inactivity',
+    desc:'Inter-turn waiting layer. After every turn, the conversation enters an async wait. Voice: 60s → repeat message → 60s → hang up (max 2 timeouts). Digital: 120s → "were we helpful?" → 10hr idle → close.',
+    inputs:'end-hook (from end-turn)',
+    outputs:'planner (customer responded — new turn), end-session (timeout — close)'
+  },
+  'g-wrapup':{
+    title:'S.1 End Conversation',
+    desc:'Session teardown pipeline. All conversations end here. Runs conversation summary + disposition LLM prompts, lifts customer profile and field data to CRM, then either transfers to human agent queue or hard-closes.',
+    inputs:'end-session (from timers, goodbye, difficulty-hearing, delay-inferred-transfer)',
+    outputs:'agent-queue (human transfer) or immediate-close (bot resolved)'
+  },
+  'g-error':{
+    title:'E.0 Error Recovery',
+    desc:'Three-tier error cascade. Universal error sink reachable from 39 nodes. Tier 1: silent retry via chain-guide (re-runs the guide). Tier 2: soft-error admits the problem, asks customer to retry. Tier 3: hard-error transfers to human agent.',
+    inputs:'Any node\'s onError handler',
+    outputs:'chain-guide (retry), end-turn (soft-error), lift-fields → transfer (hard-error)'
+  },
+};
+
+const NODE_DESC={
+  'assigned':{desc:'Entry point. Captures customer profile (name, phone, email, language), sets voice flag from platform, computes canary flag for A/B testing.',inputs:'New conversation',outputs:'canary or platform-switch'},
+  'canary':{desc:'A/B traffic split placeholder. Currently always passes through — no active canary logic. The split decision happens in assigned.',inputs:'assigned',outputs:'platform-switch'},
+  'platform-switch':{desc:'Sets default guide (general_support_guide). Routes based on channel.',inputs:'canary or assigned',outputs:'voice-assigned (voice) or digital-assigned (digital)'},
+  'voice-assigned':{desc:'Configures STT model (Deepgram Nova 3) and TTS model (Polly Ruth Generative). Sets optimistic guide execution flag for speculative pre-computation.',inputs:'platform-switch',outputs:'voice-intro'},
+  'digital-assigned':{desc:'Starts typing indicator. Sets optimistic guide execution flag.',inputs:'platform-switch',outputs:'digital-intro'},
+  'voice-intro':{desc:'Sends SMS consent greeting: "Can we send you text messages to assist with your inquiry today?"',inputs:'voice-assigned',outputs:'end-turn'},
+  'digital-intro':{desc:'Sends greeting. If customer message is "Incoming Chat" (no content), waits for first message. Otherwise routes to planner immediately with the message content.',inputs:'digital-assigned',outputs:'end-turn or planner'},
+  'planner':{desc:'Runs 15 parallel LLM classification prompts: intent, sensitivity, escalation scenarios, search phrases, attack detection, voice signals, and speculatively pre-runs the guide when optimistic mode is enabled. Short-circuits to long-msg if message > 1024 chars.',inputs:'Timers (customer response), digital-intro',outputs:'arbiter (with all classification results)'},
+  'arbiter':{desc:'Main routing decision node. Reads planner output and dispatches: attack → security-bypass; sensitive/escalation → escalation-scenario; voice link accepted → send-link-filler; end conversation → goodbye; default → extract.',inputs:'planner (classification results)',outputs:'security-bypass, escalation-scenario, send-link-filler, goodbye, clarify, extract'},
+  'escalation-scenario':{desc:'Sets switchGuide to human_agent_escalation_guide and routes to load-guide. Single-purpose escalation trigger.',inputs:'arbiter (sensitive/escalation detected)',outputs:'load-guide'},
+  'extract':{desc:'Runs extract-guide-data prompt to pull structured intent/entity data from the conversation. Short-circuits if data was already extracted on the optimistic path.',inputs:'arbiter, switch-guide, send-sms-link',outputs:'route-guide'},
+  'route-guide':{desc:'Guide dispatch table. Reads botSession.guide and routes to the correct domain guide (7 branches). Falls back to support-guide with error flag if guide is unknown.',inputs:'chain-guide, extract, retry',outputs:'One of 7 guide nodes'},
+  'chain-guide':{desc:'Loop guard. Prevents infinite guide chaining. If chainedCount > 2, breaks the loop and routes to clarify. Otherwise increments counter and continues to route-guide.',inputs:'error-handler, relevant-info, retry',outputs:'route-guide (continue) or clarify (loop cap)'},
+  'load-guide':{desc:'Calls GP.load_guide() to write the selected guide\'s system prompt and config into botSession. Extracted from switch-guide in v5 to separate loading from selection.',inputs:'switch-guide, escalation-scenario',outputs:'extract'},
+  'security-bypass':{desc:'Visual waypoint for the arbiter → deny-attack path. Keeps the attack response edge from crossing through the core guide generation pipeline.',inputs:'arbiter (attack detected)',outputs:'deny-attack'},
+  'long-msg':{desc:'Sends canned response: "As an AI Assistant, I do best with shorter questions. Would you mind rephrasing?" Triggered when customer message exceeds 1024 characters.',inputs:'planner (message too long)',outputs:'end-turn'},
+  'clarify':{desc:'Sends "Can you repeat that?" (or voice: "Can you say that again?"). Dual purpose: chain-guide loop cap and voice garbled speech detection.',inputs:'chain-guide (loop cap), arbiter',outputs:'end-turn'},
+  'goodbye':{desc:'Sends "Thank you for contacting us today, goodbye." Terminal polite close path.',inputs:'arbiter (end_conversation tool)',outputs:'end-session'},
+  'send-link-filler':{desc:'Sends "one moment" filler message. If SMS consent not yet obtained, short-circuits to switch-guide to load sms_consent_guide first.',inputs:'arbiter (voice link accepted)',outputs:'send-sms-link, or switch-guide (needs consent)'},
+  'send-sms-link':{desc:'Runs voice_choose_links prompt — AI picks which links to send via SMS. Routes back to extract to re-enter pipeline with link context.',inputs:'send-link-filler',outputs:'extract'},
+  'support-guide':{desc:'Default general support guide. Runs run-guide LLM prompt to generate response and select tool. Standard shell pattern shared by all guides.',inputs:'route-guide (general_support_guide)',outputs:'validate-links → route-tool'},
+  'escalation-guide':{desc:'Handles human transfer requests. Increments escalationCounter. Runs run-guide LLM prompt.',inputs:'route-guide (human_agent_escalation_guide)',outputs:'validate-links → route-tool'},
+  'content-inquiry-guide':{desc:'Content/programming questions. Has a preprocessor short-circuit: if no prior search this conversation, sets tool=content_search and skips the LLM entirely. Only runs the LLM after a search has occurred.',inputs:'route-guide (content_inquiry_guide)',outputs:'validate-links → route-tool'},
+  'live-sports-guide':{desc:'Sports-related queries. Standard run-guide LLM prompt.',inputs:'route-guide (live_sports_guide)',outputs:'validate-links → route-tool'},
+  'acct-mngt-guide':{desc:'Account management (billing, plan changes). Standard run-guide LLM prompt.',inputs:'route-guide (account_management_guide)',outputs:'validate-links → route-tool'},
+  'acct-verification-guide':{desc:'Identity verification flows. Standard run-guide LLM prompt.',inputs:'route-guide (account_verification_guide)',outputs:'validate-links → route-tool'},
+  'sms-consent-guide':{desc:'SMS opt-in consent collection. Standard run-guide LLM prompt.',inputs:'route-guide (sms_consent_guide)',outputs:'validate-links → route-tool'},
+  'retry':{desc:'Calls GP.retry_guide. Logs warn_info(failed_verification). If search not done this turn: sets tool=search_for_information → route-tool. If already searched: re-enters via chain-guide with loop guard. Sets retryVerification=true.',inputs:'false-agency, verify-claim (safety failures); route-tool (bad links)',outputs:'chain-guide or route-tool'},
+  'switch-guide':{desc:'Calls GP.switch_guide. Four strategies: (1) tool-directed run_*_guide with parentGuide save; (2) explicit switchGuide field; (3) return to parentGuide; (4) fallback to general_support_guide. Implements a one-deep call/return stack for nested guides.',inputs:'route-tool (switch_guide), analyze-turn (post-turn), escalation-scenario, send-link-filler',outputs:'load-guide'},
+  'validate-links':{desc:'Link hallucination check. Runs after every guide LLM call. Validates that URLs in the AI response actually appeared in the prompt. Sets retryBadLinks if hallucinated links detected.',inputs:'All guide nodes',outputs:'route-tool'},
+  'route-tool':{desc:'Tool dispatch table with 11 branches. Reads botSession.tool and dispatches: search → search-filler; content → g-content; transfer → g-escalation; OTP → g-auth; account → g-retrieval; switch → switch-guide; eager → speak-eagerly; default → channel-rewrites. Highest fan-out node in the graph.',inputs:'validate-links (from all guides), speak-eagerly (loop-back)',outputs:'All tool branches'},
+  'speak-eagerly':{desc:'Calls Messages.speak_eagerly. Sends the pre-computed answer via TTS immediately on voice turns. Sets voiceSpokeEagerlyThisTurn=true, then loops back to route-tool to continue with the actual tool dispatch.',inputs:'route-tool (voice eager path)',outputs:'route-tool (loop-back)'},
+  'channel-rewrites':{desc:'Default/happy path response formatting. Runs voice-offer-link (offers to SMS links on voice) and rich-links (formats clickable links for digital). Always routes to safety-prompts.',inputs:'route-tool (default — no tool needed)',outputs:'safety-prompts'},
+  'search-filler':{desc:'Sends "Just a moment please" filler on voice. Sets alreadySearchedThisTurn and alreadySearchedThisConvo flags. Kicks off knowledge-search eagerly via speculative execution.',inputs:'route-tool (search_for_information, content_search)',outputs:'knowledge-search'},
+  'knowledge-search':{desc:'Searches 4 indexes in parallel: articles-idx (by search phrase + goal phrase), movies-idx, show-idx (by goal phrase). Returns top-K results per index.',inputs:'search-filler, lookup-account-info',outputs:'relevant-info'},
+  'relevant-info':{desc:'Runs relevant-web-results and relevant-articles prompts to score and filter search results for relevance. Routes to chain-guide to re-enter the guide pipeline with enriched context.',inputs:'knowledge-search',outputs:'chain-guide'},
+  'lookup-account-info':{desc:'Calls account lookup webhook API. Pre-processing via lookup_account_info, post-processing via add_account_info. Adds CRM/account context before searching.',inputs:'route-tool (lookup_account_info)',outputs:'knowledge-search (stacks account data with search)'},
+  'provide-content-details':{desc:'Sends hardcoded response: "The best way to check for shows, movies, and other programming is directly on the HBO Max site at HBOMax.com." Fires when AI selected provide_content_details but ignores actual search results.',inputs:'route-tool (provide_content_details)',outputs:'prepare-msg'},
+  'content-not-found':{desc:'Content search gate. In v7: routes to prepare-msg (gives up gracefully). Previously had a retry edge to search-filler which was moved to route-tool.',inputs:'route-tool (content_not_found)',outputs:'prepare-msg'},
+  'transfer_to_human_agent':{desc:'Sends holding message: "Please hold while I connect you with a representative." The actual transfer is orchestrated by analyze-turn detecting agentTransferedToHumanAgent → delay-inferred-transfer → session wrapup.',inputs:'route-tool (transfer_to_human_agent)',outputs:'prepare-msg'},
+  'set-otp':{desc:'Generates a 6-digit one-time passcode. Stores it in botSession.oneTimePasscode.',inputs:'route-tool (send_one_time_passcode)',outputs:'notify-otp'},
+  'notify-otp':{desc:'Sets the OTP text message and sends SMS notification to the customer\'s phone number.',inputs:'set-otp',outputs:'sent-otp-msg'},
+  'sent-otp-msg':{desc:'Tells customer: "I\'ve sent you a text message with a six digit code. Please share it here." Turn ends; waits for customer response.',inputs:'notify-otp',outputs:'prepare-msg'},
+  'verify-otp':{desc:'Checks customer-provided code against stored OTP. Routes to verified or unverified message based on match.',inputs:'route-tool (verify_one_time_passcode)',outputs:'verified-otp-msg (match) or unverified-otp-msg (mismatch)'},
+  'verified-otp-msg':{desc:'Confirms: "Thank you, I\'ve verified your phone number." Sets tool=switch_guide to return control to the guide that requested verification.',inputs:'verify-otp (code matched)',outputs:'prepare-msg'},
+  'unverified-otp-msg':{desc:'Asks retry: "Can you double check the code?" Turn ends; waits for customer to try again. Warning: no retry cap — can loop indefinitely.',inputs:'verify-otp (code mismatch)',outputs:'prepare-msg'},
+  'safety-prompts':{desc:'Runs 7 parallel safety classification prompts: attack-probability, verification-required, ai-claims, aggregate-evidence, false-agency, risk-level, system-attack.',inputs:'channel-rewrites',outputs:'route-safety'},
+  'route-safety':{desc:'Reads safety classification results and routes: attack confirmed → deny-attack; false agency detected → false-agency; unverified claims → verify-claim; all clear → prepare-msg.',inputs:'safety-prompts, confirm-attack, confirm-false-agency, confirm-unverified',outputs:'deny-attack, false-agency, verify-claim, or prepare-msg'},
+  'deny-attack':{desc:'Attack response. Clears eager audio if it already spoke. First visit (not confirmed): routes to confirm-attack for second LLM opinion. Second visit (confirmed): sends transfer message and exits turn.',inputs:'route-safety (attack), security-bypass (from arbiter)',outputs:'confirm-attack (first visit), end-turn (confirmed)'},
+  'confirm-attack':{desc:'Second-opinion LLM check for attack detection. Runs confirm-attack and system-attack prompts. Sets confirmedAttack=true, then returns to route-safety for re-evaluation.',inputs:'deny-attack (first visit)',outputs:'route-safety'},
+  'false-agency':{desc:'False agency decision gate. If not yet retried: routes to retry for correction attempt. If already retried once: routes to false-agency-msg (give up, inform customer).',inputs:'route-safety (false agency detected)',outputs:'retry or false-agency-msg'},
+  'confirm-false-agency':{desc:'Second-opinion LLM confirmation for false agency. Sets confirmedFalseAgency=true, returns to route-safety.',inputs:'false-agency-msg (first visit)',outputs:'route-safety'},
+  'false-agency-msg':{desc:'Clears eager audio. First visit: routes to confirm-false-agency for second opinion. Confirmed: sends "I may be running into an issue. Would you like to connect with a representative?"',inputs:'false-agency (already retried)',outputs:'confirm-false-agency or end-turn'},
+  'verify-claim':{desc:'Checks factual claims against evidence. Evidence score > 34: verified → prepare-msg. Unverified + retry allowed: → retry. Unverified + already retried: → unverified-msg.',inputs:'route-safety (verification required)',outputs:'prepare-msg, retry, or unverified-msg'},
+  'confirm-unverified':{desc:'Second-opinion LLM confirmation for unverified claims. Sets confirmedUnverified=true, returns to route-safety.',inputs:'unverified-msg (first visit)',outputs:'route-safety'},
+  'unverified-msg':{desc:'Clears eager audio. First visit: routes to confirm-unverified. Confirmed: sends hedged response acknowledging the claim couldn\'t be verified.',inputs:'verify-claim (unverified, already retried)',outputs:'confirm-unverified or end-turn'},
+  'prepare-msg':{desc:'Final message formatting. Runs voice-offer-link and rich-links prompts for channel-appropriate output. Short-circuits if links already rewritten.',inputs:'route-safety (clean), tool branches (content, auth, escalation)',outputs:'eager-speak-guard (deliver-message)'},
+  'end-turn':{desc:'Turn exit node. Runs analyze-turn LLM to inspect completed turn. Preprocessor: if tool=switch_guide → switch-guide; if end condition → end-session. Postprocessor reads analysis for transfer detection and link offers. Routes to end-hook for async timer.',inputs:'eager-speak-guard, bypass nodes (long-msg, clarify, deny-attack, etc.)',outputs:'end-hook, analyze-turn'},
+  'deliver-message':{desc:'Eager-speak deduplication guard. Calls Messages.deliver_message. If voiceSpokeEagerlyThisTurn is true: no-op (message already sent by speak-eagerly). Otherwise sends botSession.answer to the customer.',inputs:'prepare-msg',outputs:'end-turn'},
+  'analyze-turn':{desc:'Post-turn LLM analysis. Inspects the completed turn: did the agent transfer to human? offer a link? ask if there was anything else? Results drive post-turn routing.',inputs:'end-turn',outputs:'delay-inferred-transfer, end-session, switch-guide'},
+  'end-hook':{desc:'Calls EndTurn.end_turn_hook. Routes to appropriate async timer: end_conversation → end-session; voice → voice-timer; digital → digital-timer.',inputs:'end-turn',outputs:'end-session, voice-timer, or digital-timer'},
+  'voice-timer':{desc:'60-second voice inactivity timer. Customer responds → planner (new turn). First timeout → repeat-last-message. Second consecutive timeout (voiceTimeoutLastTurn) → difficulty-hearing (hang up).',inputs:'end-hook, repeat-last-message',outputs:'planner, repeat-last-message, or difficulty-hearing'},
+  'digital-timer':{desc:'120-second digital inactivity timer. Customer responds → planner (new turn). Timeout: if last tool was share_information → ask-was-helpful; otherwise → close-timer.',inputs:'end-hook',outputs:'planner, ask-was-helpful, or close-timer'},
+  'close-timer':{desc:'10-hour open inactivity window. Customer responds → planner (new turn). Timeout → sets tool=end_conversation → end-session.',inputs:'digital-timer, ask-was-helpful',outputs:'planner or end-session'},
+  'ask-was-helpful':{desc:'Sends: "Were we able to be helpful today?" Starts the long idle timer for digital sessions.',inputs:'digital-timer (after info shared)',outputs:'close-timer'},
+  'repeat-last-message':{desc:'Re-plays the bot\'s last TTS audio message when the voice caller hasn\'t responded (first timeout). Returns to voice-timer for another 60s wait.',inputs:'voice-timer (first timeout)',outputs:'voice-timer'},
+  'difficulty-hearing':{desc:'Sends: "I\'m sorry, I\'m having difficulty hearing you. Please call us back." Terminal voice inactivity — ends the session.',inputs:'voice-timer (second timeout)',outputs:'end-session'},
+  'delay-inferred-transfer':{desc:'30-second timer. If customer responds within 30s → planner (cancel the inferred transfer). If timer expires → sets tool=transfer_to_human_agent → end-session.',inputs:'analyze-turn (transfer detected)',outputs:'planner or end-session'},
+  'end-session':{desc:'Runs convo_summary and disposition LLM prompts to capture conversation metadata before teardown. Routes to lift-profile for CRM data lift.',inputs:'goodbye, difficulty-hearing, end-hook, delay-inferred-transfer, close-timer',outputs:'lift-profile'},
+  'lift-profile':{desc:'Lifts customer profile data to CRM.',inputs:'end-session',outputs:'lift-fields'},
+  'lift-fields':{desc:'Sets conversation summary. If transfer: voice → immediate-close (platform handles); digital → transfer-note. No transfer → immediate-close.',inputs:'lift-profile, hard-error',outputs:'immediate-close or transfer-note'},
+  'transfer-note':{desc:'Creates a handoff note for the human agent with conversation context.',inputs:'lift-fields (digital transfer)',outputs:'agent-queue'},
+  'agent-queue':{desc:'Terminal node. Routes the conversation to the default human agent queue.',inputs:'transfer-note',outputs:'None (terminal)'},
+  'immediate-close':{desc:'Terminal node. Hard-closes the conversation.',inputs:'lift-fields',outputs:'None (terminal)'},
+  'error-handler':{desc:'Universal error sink — receives errors from 39 nodes. If retry budget remains: sets retryError, ensures guide is set, routes to chain-guide for silent retry. Budget exhausted → soft-error.',inputs:'Nearly every node\'s onError handler',outputs:'chain-guide (retry) or soft-error'},
+  'soft-error':{desc:'First-level error recovery. Sends: "I seem to be encountering an issue. Would you mind repeating that?" If error count exceeded → escalates to hard-error.',inputs:'error-handler',outputs:'end-turn or hard-error'},
+  'hard-error':{desc:'Final error escalation. Sends: "I\'ll transfer you to a live agent for further assistance." Routes to lift-fields for transfer/close.',inputs:'soft-error (unrecoverable)',outputs:'lift-fields → transfer or close'},
+};
+
+// ── Hover tooltip ────────────────────────────────────────────────────────────
+(function(){
+  const ttEl=document.getElementById('tooltip');
+  let hoverTimer=null, currentTarget=null;
+
+  function showTooltip(e,html){
+    ttEl.innerHTML=html;
+    ttEl.classList.add('show');
+    positionTooltip(e);
+  }
+  function hideTooltip(){
+    clearTimeout(hoverTimer);
+    hoverTimer=null;
+    currentTarget=null;
+    ttEl.classList.remove('show');
+    ttEl.style.display='none';
+  }
+  function positionTooltip(e){
+    const mx=e.originalEvent?e.originalEvent.clientX:e.clientX;
+    const my=e.originalEvent?e.originalEvent.clientY:e.clientY;
+    const pad=14;
+    let left=mx+pad, top=my+pad;
+    // Keep on screen
+    const vw=window.innerWidth, vh=window.innerHeight;
+    ttEl.style.display='block';
+    const tw=ttEl.offsetWidth, th=ttEl.offsetHeight;
+    if(left+tw>vw-10) left=mx-tw-pad;
+    if(top+th>vh-10) top=my-th-pad;
+    ttEl.style.left=left+'px';
+    ttEl.style.top=top+'px';
+  }
+
+  function buildGroupHtml(gid){
+    const info=GROUP_DESC[gid];
+    if(!info) return null;
+    return '<div class="tt-title">'+info.title+'</div>'+
+      '<div class="tt-body">'+info.desc+'</div>'+
+      '<div class="tt-section">Inputs</div><div class="tt-body">'+info.inputs+'</div>'+
+      '<div class="tt-section">Outputs</div><div class="tt-body">'+info.outputs+'</div>';
+  }
+  function buildNodeHtml(nid){
+    const info=NODE_DESC[nid];
+    if(!info) return null;
+    const el=cy.getElementById(nid);
+    const ntype=el.data('type')||'';
+    return '<div class="tt-title">'+el.data('rawLabel')+'</div>'+
+      (ntype?'<div class="tt-type">'+ntype+'</div>':'')+
+      '<div class="tt-body">'+info.desc+'</div>'+
+      '<div class="tt-section">Inputs</div><div class="tt-body">'+info.inputs+'</div>'+
+      '<div class="tt-section">Outputs</div><div class="tt-body">'+info.outputs+'</div>';
+  }
+
+  cy.on('mouseover','node',function(e){
+    const node=e.target;
+    if(node.data('isDivider')||node.data('isLaneLabel')) return;
+    if(currentTarget===node.id()) return;
+    clearTimeout(hoverTimer);
+    currentTarget=node.id();
+    hoverTimer=setTimeout(function(){
+      const isGroup=node.data('isGroup');
+      const html=isGroup?buildGroupHtml(node.id()):buildNodeHtml(node.id());
+      if(html) showTooltip(e,html);
+    },1000);
+  });
+  cy.on('mouseout','node',function(){ hideTooltip(); });
+  cy.on('pan zoom drag',function(){ hideTooltip(); });
+})();
+
+// ── Collapse / expand ─────────────────────────────────────────────────────────
+const collapsedGroups=new Set();
+let errEdgesHidden=false;
+let corePathMode=false;
+let _vId=0;
+
+// Groups whose label starts with a letter (not a digit) — used for core-path toggle
+const letterPrefixGroups=new Set();
+GROUPS.forEach(g=>{
+  if(g.label && /^[A-Za-z]/.test(g.label)) letterPrefixGroups.add(g.id);
+});
+
+// Return the group ID for a node (works for both childless and group nodes)
+function nodeGroup(nodeId){
+  const el=cy.getElementById(nodeId);
+  return el.data('parent')||nodeId;
+}
+
+function resolveEndpoint(nodeId){
+  const p=cy.getElementById(nodeId).data('parent');
+  return (p&&collapsedGroups.has(p))?p:nodeId;
+}
+
+function isLetterGroupEdge(srcId, tgtId){
+  // An edge "touches" a letter-prefix group if either endpoint belongs to one.
+  // In expanded view, internal edges (both endpoints in the same letter group) are allowed.
+  if(!corePathMode) return false;
+  const srcG=nodeGroup(srcId), tgtG=nodeGroup(tgtId);
+  const srcIsLetter=letterPrefixGroups.has(srcG);
+  const tgtIsLetter=letterPrefixGroups.has(tgtG);
+  if(!srcIsLetter && !tgtIsLetter) return false;          // neither side is a letter group
+  if(srcG===tgtG) return false;                           // subnet/internal edge — always allowed
+  return true;                                            // cross-group edge touching a letter group
+}
+
+function rebuildVirtualEdges(){
+  cy.remove('[?virtual]');
+  const seen=new Set();
+  cy.edges('[!virtual]').forEach(e=>{
+    const src=e.data('source'),tgt=e.data('target');
+    const effSrc=resolveEndpoint(src),effTgt=resolveEndpoint(tgt);
+    const isErr=!!e.data('toError');
+    const internal=effSrc===effTgt;
+    const rerouted=effSrc!==src||effTgt!==tgt;
+    const errHide=isErr&&errEdgesHidden;
+    const coreHide=isLetterGroupEdge(src,tgt);
+    (internal||rerouted||errHide||coreHide)?e.hide():e.show();
+    if(rerouted&&!internal&&!errHide){
+      // For virtual (collapsed) edges, check letter-group rule using effective endpoints
+      const virtualCoreHide=corePathMode&&(letterPrefixGroups.has(effSrc)||letterPrefixGroups.has(effTgt));
+      if(!virtualCoreHide){
+        const k=effSrc+'\x00'+effTgt;
+        if(!seen.has(k)){
+          seen.add(k);
+          const isCoreEdge=!letterPrefixGroups.has(effSrc)&&!letterPrefixGroups.has(effTgt)&&!isErr;
+          cy.add({data:{id:'ve'+(++_vId),source:effSrc,target:effTgt,virtual:true,toError:isErr,coreEdge:isCoreEdge||undefined}});
+        }
+      }
+    }
+  });
+}
+
+// ── Baked layout (saved via Save Layout button) ─────────────────────────────
+const BAKED_LAYOUT={"positions":{"assigned":{"x":354.69387101951656,"y":239.50787799345244},"canary":{"x":453.88275912002246,"y":179.5974614746076},"platform-switch":{"x":556.3701591464078,"y":241.2740486354122},"voice-assigned":{"x":740.6686710722872,"y":178.36363211656737},"digital-assigned":{"x":737.3701591464078,"y":243.27404863541233},"voice-intro":{"x":924.2010123562065,"y":179.6621440424467},"digital-intro":{"x":920.3701591464076,"y":244.2740486354123},"planner":{"x":592.167483392089,"y":1098.0819346719989},"arbiter":{"x":966.0116690976856,"y":1039.371118926069},"escalation-scenario":{"x":1357.9076653294346,"y":1030.4159945765243},"extract":{"x":1153.4619423796046,"y":1104.5169647900495},"route-guide":{"x":1360.8561210984544,"y":1098.1003482459723},"send-link-filler":{"x":967.5180369426741,"y":1104.5169647900495},"send-sms-link":{"x":1052.540474767902,"y":1170.6964673918721},"long-msg":{"x":1537.1746503840318,"y":2433.8943877250285},"clarify":{"x":1697.1746503840318,"y":2433.8943877250285},"goodbye":{"x":1857.1746503840316,"y":2433.8943877250285},"support-guide":{"x":1695.5644293704922,"y":945.0075633903346},"escalation-guide":{"x":1697.5644293704922,"y":1110.0075633903346},"content-inquiry-guide":{"x":1697.5644293704922,"y":1000.0075633903346},"live-sports-guide":{"x":1697.5644293704922,"y":1055.0075633903346},"acct-mngt-guide":{"x":1698.5644293704922,"y":1163.0075633903346},"acct-verification-guide":{"x":1698.5644293704922,"y":1217.0075633903346},"sms-consent-guide":{"x":1698.5644293704922,"y":1272.0075633903346},"retry":{"x":1697.5361820757137,"y":2200.232528834754},"switch-guide":{"x":1698.5361820757137,"y":2104.232528834754},"chain-guide":{"x":1361.513486610585,"y":1166.4817912748447},"route-tool":{"x":1998.7474273195842,"y":1052.6809819980203},"speak-eagerly":{"x":1996.758646232198,"y":1133.1170028125994},"search-filler":{"x":1696.6888887967493,"y":1752.0010539460307},"knowledge-search":{"x":1696.6888887967493,"y":1825.001053946031},"relevant-info":{"x":1697.6888887967493,"y":1895.0010539460316},"lookup-account-info":{"x":1697.6888887967493,"y":1663.0010539460307},"provide-content-details":{"x":1696.6888887967493,"y":1444.0010539460307},"content-not-found":{"x":1698.6888887967493,"y":1498.0010539460307},"transfer_to_human_agent":{"x":2314.4160577370676,"y":1821.016739733987},"set-otp":{"x":2232.7471768654727,"y":1417.305945620806},"notify-otp":{"x":2233.7471768654727,"y":1487.305945620806},"sent-otp-msg":{"x":2398.7471768654723,"y":1481.305945620806},"verify-otp":{"x":2234.7471768654723,"y":1558.305945620806},"verified-otp-msg":{"x":2396.7471768654723,"y":1555.305945620806},"unverified-otp-msg":{"x":2399.7471768654723,"y":1625.305945620806},"channel-rewrites":{"x":2316.6959816643966,"y":1090.133592358243},"safety-prompts":{"x":2663.1353524725605,"y":1211.4707763348702},"route-safety":{"x":2848.036177453993,"y":1207.7830299255281},"deny-attack":{"x":2847.5926906174814,"y":986.0624471069527},"confirm-attack":{"x":2747.1253210392147,"y":1091.899357659712},"false-agency":{"x":3208.1009752075897,"y":1093.2422973278824},"confirm-false-agency":{"x":3025.2449353402762,"y":1039.4172744059306},"false-agency-msg":{"x":3439.2567360696535,"y":1041.4092623212468},"verify-claim":{"x":3204.3678728331925,"y":1206.1564481881576},"confirm-unverified":{"x":3025.2667413822624,"y":1149.7221844497349},"unverified-msg":{"x":3434.4506005182034,"y":1147.8297784464555},"prepare-msg":{"x":3433.47927960839,"y":1206.3128029934362},"end-turn":{"x":3985.2105114115075,"y":1106.6993175119512},"deliver-message":{"x":3790.755521731535,"y":1106.9149475711931},"end-hook":{"x":3289.513635736547,"y":550.501098176861},"voice-timer":{"x":3480.138888242995,"y":608.3219635492254},"digital-timer":{"x":3480.138888242995,"y":546.3871678378641},"close-timer":{"x":3677.9103189005205,"y":472.7742475246605},"ask-was-helpful":{"x":3675.9103189005214,"y":542.181951494773},"repeat-last-message":{"x":3483.138888242995,"y":679.4228530304948},"difficulty-hearing":{"x":3677.8128667998076,"y":606.790725762941},"delay-inferred-transfer":{"x":3285.365588823624,"y":157.8812736301363},"end-session":{"x":3471.2214321574274,"y":155.30919529703812},"agent-queue":{"x":4163.221432157414,"y":154.30919529703812},"transfer-note":{"x":3985.221432157415,"y":153.30919529703812},"lift-profile":{"x":3641.2214321574274,"y":156.30919529703812},"lift-fields":{"x":3811.2214321574243,"y":154.30919529703812},"immediate-close":{"x":4164.780946897987,"y":215.76181204212122},"error-handler":{"x":1755.330150665643,"y":635.1814238339399},"soft-error":{"x":1924.3301506656435,"y":633.1814238339399},"hard-error":{"x":2095.330150665644,"y":632.1814238339399}},"zoom":0.24207381173315407,"pan":{"x":465.66519581932687,"y":65.89926134192832},"legendPos":{"left":1732,"top":555}};
+
+// ── Canvas-based text measurement ────────────────────────────────────────────
+const _measureCanvas=document.createElement('canvas');
+function measureLabelPx(text,fontSize){
+  const ctx=_measureCanvas.getContext('2d');
+  ctx.font=`700 ${fontSize}px Inter,system-ui,sans-serif`;
+  return ctx.measureText(text).width;
+}
+
+function refreshLabel(node){
+  const collapsed=collapsedGroups.has(node.id());
+  const count=node.children().length;
+  node.data('label',(collapsed?'▶  ':'▼  ')+node.data('origLabel')+'  ['+count+']');
+}
+
+function applyCollapsedStyle(node){
+  const labelText='▶  '+node.data('origLabel')+'  ['+node.children().length+']';
+  // Target ~2 lines: wrap at half the single-line width (+ buffer for font variance)
+  const fullW=Math.ceil(measureLabelPx(labelText,36));
+  const textMaxW=Math.ceil(fullW/2)+60;
+  const boxW=Math.max(textMaxW+48, node.width());
+  const boxH=Math.max(120, node.height()); // enough for 2 lines at 36px
+  node.style({
+    'text-valign':'center','text-margin-y':0,
+    'font-size':36,'text-wrap':'wrap','text-max-width':textMaxW,
+    width:boxW, height:boxH
+  });
+}
+
+function applyExpandedStyle(node){
+  node.style({'text-valign':'top','text-margin-y':8,'font-size':11,'text-wrap':'ellipsis'});
+  node.removeStyle('width height text-max-width');
+}
+
+function toggleGroup(node){
+  const gid=node.id();
+  const children=node.children();
+  if(collapsedGroups.has(gid)){
+    collapsedGroups.delete(gid);
+    children.style({opacity:1,events:'yes'});
+    applyExpandedStyle(node);
+  }else{
+    collapsedGroups.add(gid);
+    children.style({opacity:0,events:'no'});
+    applyCollapsedStyle(node);
+  }
+  rebuildVirtualEdges();
+  refreshLabel(node);
+}
+
+cy.on('tap',':parent',function(e){
+  if(e.target===e.cy)return;
+  toggleGroup(e.target);
+});
+
+cy.nodes(':parent').forEach(n=>refreshLabel(n));
+
+// ── Toolbar ───────────────────────────────────────────────────────────────────
+function toggleErrorEdges(){
+  errEdgesHidden=!errEdgesHidden;
+  document.getElementById('errEdgeBtn').classList.toggle('active',errEdgesHidden);
+  rebuildVirtualEdges();
+  document.getElementById('errEdgeLabel').textContent=(errEdgesHidden?'Show':'Hide')+' Error Edges';
+}
+function toggleCorePath(){
+  corePathMode=!corePathMode;
+  document.getElementById('corePathBtn').classList.toggle('active',corePathMode);
+  rebuildVirtualEdges();
+  document.getElementById('corePathLabel').textContent=corePathMode?'Full View':'Core Path';
+}
+function collapseAll(){
+  cy.nodes(':parent').forEach(n=>{
+    collapsedGroups.add(n.id());
+    n.children().style({opacity:0,events:'no'});
+    applyCollapsedStyle(n);
+    refreshLabel(n);
+  });
+  rebuildVirtualEdges();
+}
+function expandAll(){
+  cy.nodes(':parent').forEach(n=>{
+    collapsedGroups.delete(n.id());
+    n.children().style({opacity:1,events:'yes'});
+    applyExpandedStyle(n);
+    refreshLabel(n);
+  });
+  rebuildVirtualEdges();
+}
+
+// ── Position persistence ──────────────────────────────────────────────────────
+const POS_KEY='quiq-v3-layout-v1';
+function savePositions(){
+  const pos={};
+  cy.nodes(':childless').forEach(n=>{ if(!n.data('isDivider')&&!n.data('isLaneLabel')) pos[n.id()]=n.position(); });
+  localStorage.setItem(POS_KEY,JSON.stringify({positions:pos,zoom:cy.zoom(),pan:cy.pan()}));
+}
+function loadPositions(){
+  try{
+    const raw=localStorage.getItem(POS_KEY);
+    if(!raw)return false;
+    const {positions,zoom,pan}=JSON.parse(raw);
+    cy.nodes(':childless').forEach(n=>{ if(positions[n.id()])n.position(positions[n.id()]); });
+    if(zoom!=null)cy.zoom(zoom);
+    if(pan)cy.pan(pan);
+    return true;
+  }catch(e){return false;}
+}
+function resetLayout(){localStorage.removeItem(POS_KEY);location.reload();}
+
+// ── Legend drag ───────────────────────────────────────────────────────────────
+(function(){
+  const el=document.getElementById('legend');
+  let ox,oy,sx,sy,dragging=false;
+  el.addEventListener('mousedown',e=>{
+    dragging=true;
+    const r=el.getBoundingClientRect();
+    sx=e.clientX;sy=e.clientY;ox=r.left;oy=r.top;
+    el.style.right='auto';el.style.bottom='auto';
+    el.style.left=ox+'px';el.style.top=oy+'px';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    el.style.left=(ox+e.clientX-sx)+'px';
+    el.style.top=(oy+e.clientY-sy)+'px';
+  });
+  document.addEventListener('mouseup',()=>{ dragging=false; });
+})();
+
+function getLegendPos(){
+  const r=document.getElementById('legend').getBoundingClientRect();
+  return {left:Math.round(r.left),top:Math.round(r.top)};
+}
+function applyLegendPos(pos){
+  const el=document.getElementById('legend');
+  el.style.right='auto';el.style.bottom='auto';
+  el.style.left=pos.left+'px';el.style.top=pos.top+'px';
+}
+
+function saveToFile(){
+  // Collect current positions of all child nodes
+  const pos={};
+  cy.nodes(':childless').forEach(n=>{
+    if(!n.data('isDivider')&&!n.data('isLaneLabel')) pos[n.id()]=n.position();
+  });
+  const zoom=cy.zoom(), pan=cy.pan();
+
+  // Use the pre-Cytoscape snapshot of the original source
+  let html=_originalHTML;
+
+  const legendPos=getLegendPos();
+  const marker='// ── Canvas-based text measurement';
+  const block=`// ── Baked layout (saved via Save Layout button) ─────────────────────────────\nconst BAKED_LAYOUT=${JSON.stringify({positions:pos,zoom,pan,legendPos})};\n\n`;
+  // Remove any previous baked layout block then insert the new one
+  html=html.replace(/\/\/ ── Baked layout[\s\S]*?const BAKED_LAYOUT=.*?;\n\n/,'');
+  html=html.replace(marker, block+marker);
+
+  const blob=new Blob(['<!DOCTYPE html>\n'+html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='demo_v3.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+cy.on('dragfree','node',savePositions);
+let vpTimer=null;
+cy.on('zoom pan',()=>{clearTimeout(vpTimer);vpTimer=setTimeout(savePositions,400);});
+
+// Load priority: 1) localStorage (local tweaks), 2) BAKED_LAYOUT (baked via Save Layout), 3) default fit
+function loadBakedLayout(){
+  if(typeof BAKED_LAYOUT==='undefined') return false;
+  try{
+    const {positions,zoom,pan,legendPos}=BAKED_LAYOUT;
+    cy.nodes(':childless').forEach(n=>{ if(positions[n.id()])n.position(positions[n.id()]); });
+    if(zoom!=null)cy.zoom(zoom);
+    if(pan)cy.pan(pan);
+    if(legendPos)applyLegendPos(legendPos);
+    return true;
+  }catch(e){return false;}
+}
+
+if(!loadPositions()&&!loadBakedLayout()) setTimeout(()=>cy.fit(undefined,60),120);
+setTimeout(()=>{ document.getElementById('hint').style.opacity='0'; },6000);
+</script></body></html>
