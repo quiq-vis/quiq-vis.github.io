@@ -1,0 +1,35 @@
+/*
+ * quiq-overrides.css — injected INSIDE the Quiq web chat widget via the
+ * customStylesheet option in index.html.
+ *
+ * Cards sent with messageAttributes.cssClassName: "custom-blue-card"
+ * get the class below on their container. Edit, save, refresh the page.
+ * Quiq's own styles have high specificity — keep !important on overrides.
+ */
+
+/* Card container tagged by the message payload */
+.custom-blue-card {
+  background-color: #0056b3 !important;
+  border: 1px solid #004085 !important;
+  border-radius: 8px !important;
+}
+
+/* Title / subtitle text inside the tagged card */
+.custom-blue-card .quiq-card-title,
+.custom-blue-card .quiq-card-subtitle,
+.custom-blue-card .quiq-carousel-card-title,
+.custom-blue-card .quiq-carousel-card-subtitle {
+  color: #ffffff !important;
+}
+
+/* Button inside the tagged card */
+.custom-blue-card button {
+  background-color: #ffffff !important;
+  color: #0056b3 !important;
+  border-radius: 4px !important;
+  font-weight: bold !important;
+}
+
+.custom-blue-card button:hover {
+  background-color: #e6f0fa !important;
+}
