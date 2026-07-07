@@ -1,0 +1,22 @@
+/* Diagnostic: generic rule on the REAL card class — proves injection + selector reach */
+.QuiqCard {
+  background-color: #0056b3 !important;
+  border: 2px solid #004085 !important;
+  border-radius: 8px !important;
+}
+
+.QuiqCard .title,
+.QuiqCard .subtitle {
+  color: #ffffff !important;
+}
+
+.QuiqCard .Button span {
+  color: #ffd200 !important;
+  font-weight: bold !important;
+}
+
+/* If cssClassName lands on a container, this scoped variant also matches */
+.custom-blue-card .QuiqCard,
+.custom-blue-card.QuiqCard {
+  outline: 3px dashed #ff00aa !important;
+}
