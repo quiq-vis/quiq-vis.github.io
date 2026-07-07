@@ -3,16 +3,25 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Quiq contactPoint init test</title>
+    <title>Quiq CustomMessageStyleClasses test</title>
     <script src="https://seanc.quiq-api.com/app/chat-ui/index.js" type="text/javascript"></script>
   </head>
   <body>
-    <h1>contactPoint init test</h1>
-    <p>Init: <code>contactPoint: "default"</code> + <code>customStylesheet: cp-test.css</code></p>
+    <h1>CustomMessageStyleClasses test</h1>
+    <p>Init: <code>pageConfigurationId: "default"</code> + <code>styles.CustomMessageStyleClasses["custom-blue-card"]</code></p>
     <script>
       window.chat = Quiq({
-        contactPoint: "default",
-        customStylesheet: new URL("cp-test.css?v=" + Date.now(), location.href).href
+        pageConfigurationId: "default",
+        styles: {
+          CustomMessageStyleClasses: {
+            "custom-blue-card": {
+              backgroundColor: "#0056b3",
+              color: "#ffffff",
+              border: "1px solid #004085",
+              borderRadius: "8px"
+            }
+          }
+        }
       });
     </script>
   </body>
