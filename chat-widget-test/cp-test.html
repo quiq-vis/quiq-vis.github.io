@@ -3,22 +3,33 @@
   <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Quiq CustomMessageStyleClasses test</title>
+    <title>Quiq styles-shape test</title>
     <script src="https://seanc.quiq-api.com/app/chat-ui/index.js" type="text/javascript"></script>
   </head>
   <body>
-    <h1>CustomMessageStyleClasses test</h1>
-    <p>Init: <code>pageConfigurationId: "default"</code> + <code>styles.CustomMessageStyleClasses["custom-blue-card"]</code></p>
+    <h1>Documented styles shape test</h1>
+    <p>Canary: <code>styles.TranscriptContainer</code> lightgray. Card map: per-component sub-objects.</p>
     <script>
       window.chat = Quiq({
         pageConfigurationId: "default",
         styles: {
+          TranscriptContainer: {
+            backgroundColor: "lightgray"
+          },
           CustomMessageStyleClasses: {
             "custom-blue-card": {
-              backgroundColor: "#0056b3",
-              color: "#ffffff",
-              border: "1px solid #004085",
-              borderRadius: "8px"
+              bubble: {
+                backgroundColor: "#0056b3",
+                border: "1px solid #004085",
+                borderRadius: "8px"
+              },
+              title: { color: "#ffffff" },
+              subtitle: { color: "#ffffff" },
+              button: {
+                backgroundColor: "#ffffff",
+                color: "#0056b3",
+                fontWeight: "bold"
+              }
             }
           }
         }
